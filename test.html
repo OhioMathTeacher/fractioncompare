@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Which fraction is larger?</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+        h1 {
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .fraction-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            margin: 30px 0;
+        }
+        .fraction {
+            display: inline-block;
+            text-align: center;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .fraction:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .numerator {
+            border-bottom: 1px solid black;
+            padding: 0 10px;
+        }
+        .denominator {
+            padding: 0 10px;
+        }
+        .feedback {
+            min-height: 60px;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .correct {
+            color: #2ecc71;
+        }
+        .incorrect {
+            color: #e74c3c;
+        }
+        .progress {
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .hidden {
+            display: none;
+        }
+        .final-score {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #9b59b6;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Which fraction is larger?</h1>
+    <div class="progress">Question <span id="question-number">1</span> of 5</div>
+    
+    <div class="fraction-container">
+        <div class="fraction" id="fraction1" onclick="checkAnswer(1)">
+            <div class="numerator" id="num1">1</div>
+            <div class="denominator" id="den1">2</div>
+        </div>
+        
+        <div class="fraction" id="fraction2" onclick="checkAnswer(2)">
+            <div class="numerator" id="num2">1</div>
+            <div class="denominator" id="den2">3</div>
+        </div>
+    </div>
+    
+    <div class="feedback" id="feedback"></div>
+    
+    <button id="next-btn" class="hidden" onclick="nextQuestion()">Next Question</button>
+    <button id="restart-btn" class="hidden" onclick="restartQuiz()">Try Again</button>
+    
+    <div class="final-score hidden" id="final-score"></div>
+    
+    <script>
+        let currentQuestion = 0;
+        let score = 0;
+        const questions = [];
+        const encouragements = [
+            "Great job!",
+            "You're a fraction expert!",
+            "Perfect!",
+            "Awesome work!",
+            "You nailed it!",
+            "Brilliant!",
+            "Fantastic!",
+            "You're on fire!",
+            "Terrific!",
+            "Outstanding!"
+        ];
+        
+        // Generate questions with increasing difficulty
+        function generateQuestions() {
+            // Question 1: Simple proper fractions with same denominator
+            let num1 = Math.floor(Math.random() * 3) + 1;
+            let num2 = Math.floor(Math.random() * 3) + 1;
+            while (num1 === num2) {
+                num2 = Math.floor(Math.random() * 3) + 1;
+            }
+            const den1 = Math.floor(Math.random() * 4) + 3;
+            questions.push({
+                num1: Math.min(num1, num2),
+                den1: den1,
+                num2: Math.max(num1, num2),
+                den2: den1,
+                difficulty: 1
+            });
+            
+            // Question 2: Simple proper fractions with same numerator
+            num1 = Math.floor(Math.random() * 3) + 1;
+            den1 = Math.floor(Math.random() * 3) + 3;
+            den2 = Math.floor(Math.random() * 3) + 2;
+            while (den1 === den2) {
+                den2 = Math.floor(Math.random() * 3) + 2;
+            }
+            questions.push({
+                num1: num1,
+                den1: Math.max(den1, den2),
+                num2: num1,
+                den2: Math.min(den1, den2),
+                difficulty: 1
+            });
+            
+            // Question 3: Proper fractions with different numerators and denominators
+            let fraction1, fraction2;
+            do {
+                num1 = Math.floor(Math.random() * 4) + 1;
+                den1 = Math.floor(Math.random() * 5) + 2;
+                num2 = Math.floor(Math.random() * 4) + 1;
+                den2 = Math.floor(Math.random() * 5) + 2;
+                
+                fraction1 = num1 / den1;
+                fraction2 = num2 / den2;
+            } while (fraction1 === fraction2 || 
+                    (fraction1 > fraction2 && num1 > num2 && den1 < den2) || 
+                    (fraction2 > fraction1 && num2 > num1 && den2 < den1));
+            
+            if (fraction1 > fraction2) {
+                questions.push({
+                    num1: num1,
+                    den1: den1,
+                    num2: num2,
+                    den2: den2,
+                    difficulty: 2
+                });
+            } else {
+                questions.push({
+                    num1: num2,
+                    den1: den2,
+                    num2: num1,
+                    den2: den1,
+                    difficulty: 2
+                });
+            }
+            
+            // Question 4: Including improper fractions or whole numbers
+            let type = Math.floor(Math.random() * 3);
+            if (type === 0) { // proper vs improper
+                num1 = Math.floor(Math.random() * 3) + 1;
+                den1 = Math.floor(Math.random() * 3) + num1 + 1;
+                num2 = Math.floor(Math.random() * 3) + den1;
+                den2 = Math.floor(Math.random() * 3) + num1 + 1;
+                
+                questions.push({
+                    num1: num1,
+                    den1: den1,
+                    num2: num2,
+                    den2: den2,
+                    difficulty: 3
+                });
+            } else if (type === 1) { // proper vs whole
+                num1 = Math.floor(Math.random() * 3) + 1;
+                den1 = Math.floor(Math.random() * 3) + num1 + 1;
+                num2 = Math.floor(Math.random() * 3) + 1;
+                den2 = num2;
+                
+                questions.push({
+                    num1: num1,
+                    den1: den1,
+                    num2: num2,
+                    den2: den2,
+                    difficulty: 3
+                });
+            } else { // improper vs whole
+                num1 = Math.floor(Math.random() * 3) + 2;
+                den1 = Math.floor(Math.random() * (num1 - 1)) + 1;
+                num2 = Math.floor(Math.random() * 3) + 1;
+                den2 = num2;
+                
+                if (num1/den1 > num2) {
+                    questions.push({
+                        num1: num1,
+                        den1: den1,
+                        num2: num2,
+                        den2: den2,
+                        difficulty: 3
+                    });
+                } else {
+                    questions.push({
+                        num1: num2,
+                        den1: den2,
+                        num2: num1,
+                        den2: den1,
+                        difficulty: 3
+                    });
+                }
+            }
+            
+            // Question 5: More complex comparison
+            do {
+                num1 = Math.floor(Math.random() * 6) + 1;
+                den1 = Math.floor(Math.random() * 6) + 1;
+                num2 = Math.floor(Math.random() * 6) + 1;
+                den2 = Math.floor(Math.random() * 6) + 1;
+                
+                fraction1 = num1 / den1;
+                fraction2 = num2 / den2;
+            } while (fraction1 === fraction2);
+            
+            if (fraction1 > fraction2) {
+                questions.push({
+                    num1: num1,
+                    den1: den1,
+                    num2: num2,
+                    den2: den2,
+                    difficulty: 4
+                });
+            } else {
+                questions.push({
+                    num1: num2,
+                    den1: den2,
+                    num2: num1,
+                    den2: den1,
+                    difficulty: 4
+                });
+            }
+        }
+        
+        function displayQuestion() {
+            document.getElementById('num1').textContent = questions[currentQuestion].num1;
+            document.getElementById('den1').textContent = questions[currentQuestion].den1;
+            document.getElementById('num2').textContent = questions[currentQuestion].num2;
+            document.getElementById('den2').textContent = questions[currentQuestion].den2;
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').className = 'feedback';
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('question-number').textContent = currentQuestion + 1;
+            
+            // Enable both fractions for clicking
+            document.getElementById('fraction1').style.pointerEvents = 'auto';
+            document.getElementById('fraction2').style.pointerEvents = 'auto';
+            document.getElementById('fraction1').style.opacity = '1';
+            document.getElementById('fraction2').style.opacity = '1';
+        }
+        
+        function checkAnswer(selectedFraction) {
+            const fraction1Value = questions[currentQuestion].num1 / questions[currentQuestion].den1;
+            const fraction2Value = questions[currentQuestion].num2 / questions[currentQuestion].den2;
+            
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            
+            // Disable further clicks
+            document.getElementById('fraction1').style.pointerEvents = 'none';
+            document.getElementById('fraction2').style.pointerEvents = 'none';
+            
+            if ((selectedFraction === 1 && fraction1Value > fraction2Value) || 
+                (selectedFraction === 2 && fraction2Value > fraction1Value)) {
+                // Correct answer
+                score++;
+                const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+                feedback.innerHTML = '👍 <span class="correct">' + randomEncouragement + '</span>';
+                feedback.className = 'feedback correct';
+                
+                // Highlight the correct fraction
+                if (fraction1Value > fraction2Value) {
+                    document.getElementById('fraction1').style.backgroundColor = '#d4edda';
+                    document.getElementById('fraction2').style.opacity = '0.6';
+                } else {
+                    document.getElementById('fraction2').style.backgroundColor = '#d4edda';
+                    document.getElementById('fraction1').style.opacity = '0.6';
+                }
+            } else {
+                // Incorrect answer
+                feedback.innerHTML = '😢 <span class="incorrect">Not quite right. The larger fraction is ';
+                
+                if (fraction1Value > fraction2Value) {
+                    feedback.innerHTML += ` ${questions[currentQuestion].num1}/${questions[currentQuestion].den1}.</span>`;
+                    document.getElementById('fraction1').style.backgroundColor = '#d4edda';
+                    document.getElementById('fraction2').style.opacity = '0.6';
+                } else {
+                    feedback.innerHTML += ` ${questions[currentQuestion].num2}/${questions[currentQuestion].den2}.</span>`;
+                    document.getElementById('fraction2').style.backgroundColor = '#d4edda';
+                    document.getElementById('fraction1').style.opacity = '0.6';
+                }
+                
+                feedback.className = 'feedback incorrect';
+            }
+            
+            nextBtn.classList.remove('hidden');
+        }
+        
+        function nextQuestion() {
+            currentQuestion++;
+            
+            if (currentQuestion < questions.length) {
+                displayQuestion();
+            } else {
+                // Quiz completed
+                document.getElementById('fraction-container').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                document.getElementById('final-score').classList.remove('hidden');
+                document.getElementById('final-score').innerHTML = 
+                    `You just completed 5 questions.<br>You got ${score} correct!`;
+                document.getElementById('restart-btn').classList.remove('hidden');
+            }
+        }
+        
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            questions.length = 0;
+            generateQuestions();
+            document.getElementById('fraction-container').classList.remove('hidden');
+            document.getElementById('final-score').classList.add('hidden');
+            document.getElementById('restart-btn').classList.add('hidden');
+            displayQuestion();
+        }
+        
+        // Initialize the quiz
+        generateQuestions();
+        displayQuestion();
+    </script>
+</body>
+</html>
